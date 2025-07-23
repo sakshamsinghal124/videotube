@@ -22,7 +22,6 @@ import userRouter from "./routes/user.routes.js";
 import { errorhandler } from "./middleware/error.middleware.js";
 
 // routes
-
 app.use("/api/v1/healthcheck", healthcheckRouter);
 app.use("/api/v1/users", userRouter);
 

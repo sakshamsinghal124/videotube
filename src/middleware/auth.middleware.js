@@ -1,11 +1,11 @@
 import jwt from "jsonwebtoken";
-import { User } from "../models/user.model.js";
-import { ApiError } from "../utils/apiError.js";
-import { asyncHandler } from "../utils/asyncHandler.js";
+import { User } from "../models/user.models.js";
+import { ApiError } from "../utilss/ApiError.js";
+import { asynchandler } from "../utilss/asynchandler.js";
 
-export const verifyJwt = asyncHandler(async (req, _, next) => {
+export const verifyJwt = asynchandler(async (req, _, next) => {
   const token =
-    req.cookeies.token || req.header("Authorization")?.replace("Bearer ", "");
+    req.cookies.token || req.header("Authorization")?.replace("Bearer ", "");
 
   if (!token) {
     return next(new ApiError("Authentication token is missing", 401));
