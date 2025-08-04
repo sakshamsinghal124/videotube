@@ -8,6 +8,7 @@ import {
 import { ApiResponse } from "../utilss/ApiResponse.js";
 import { application } from "express";
 import jwt from "jsonwebtoken";
+import mongoose from "mongoose";
 
 const generateAccessAndrefreshToken = async (userId) => {
   try {
@@ -353,12 +354,92 @@ const getUserChanel = asynchandler(async (req, res) => {
     {
       $addFields: {
         subscribersCount: { $size: "$subscribers" },
-        channelSubscribedToCount: {
+        channelsSubscribedToCount: {
           $size: "$subscribedTo",
+        },
+        isSubscribed: {
+          $cond: {
+            if: {
+              $in: [req.user?._id, "$subscribers.subscriber"],
+            },
+            then: true,
+            else: false,
+          },
         },
       },
     },
+    {
+      $project: {
+        fullname: 1,
+        username: 1,
+        avatar: 1,
+        coverImage: 1,
+        subscribersCount: 1,
+        channelsSubscribedToCount: 1,
+        isSubscribed: 1,
+      },
+    },
   ]);
+
+  if (!chanel?.length) {
+    throw new ApiError(404, "Channel not found");
+  }
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, chanel[0], "Channel fetched successfully"));
+});
+
+const getWatchHistory = asynchandler(async (req, res) => {
+  const user = await User.aggregate([
+    {
+      $match: {
+        _id: new mongoose.Types.ObjectId(req.user._id),
+      },
+    },
+    {
+      $lookup: {
+        from: "videos",
+        localField: "watchHistory",
+        foreignField: "_id",
+        as: "watchHistoryVideos",
+        pipeline: [
+          {
+            $lookup: {
+              from: "users",
+              localField: "owner",
+              foreignField: "_id",
+              as: "ownerDetails",
+              pipeline: [
+                {
+                  $project: {
+                    fullname: 1,
+                    username: 1,
+                    avatar: 1,
+                  },
+                },
+              ],
+            },
+          },
+          {
+            $addFields: {
+              $first: "$owner",
+            },
+          },
+        ],
+      },
+    },
+  ]);
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        user[0]?.watchHistoryVideos || [],
+        "Watch history fetched successfully"
+      )
+    );
 });
 
 export {
@@ -371,4 +452,6 @@ export {
   changeCurrentPassword,
   getCurrentUser,
   updateAccountDetails,
+  getUserChanel,
+  getWatchHistory,
 };
