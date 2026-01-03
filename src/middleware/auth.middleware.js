@@ -8,7 +8,7 @@ export const verifyJwt = asynchandler(async (req, _, next) => {
     req.cookies.token || req.header("Authorization")?.replace("Bearer ", "");
 
   if (!token) {
-    return next(new ApiError("Authentication token is missing", 401));
+    return next(new ApiError(401, "Authentication token is missing"));
   }
 
   try {
